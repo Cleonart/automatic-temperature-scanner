@@ -14,8 +14,11 @@
  #define RELAY 3
  #define DFTX 4
  #define RFTX 5
- #define TRIG 6
- #define ECHO 7
+ #define TRIG 7
+ #define ECHO 6
+
+unsigned long millis_time = 0;
+unsigned long period = 10000;
 
 SoftwareSerial musicSerial(DFTX, RFTX);
 
@@ -33,6 +36,11 @@ void initializeDevice(){
   Serial.println("Initializing Device...");
   pinMode(IR1, INPUT);
   pinMode(RELAY, OUTPUT);
+
+  // HC-SR04 
+  pinMode(TRIG, OUTPUT);
+  pinMode(ECHO, INPUT);
+  
   initializeMusic();
   digitalWrite(RELAY, HIGH);
   delay(5000);
@@ -63,9 +71,12 @@ bool personDetected(){
 /*
  * Dispensing Hand Sanitizer
  */
-void dispenseHandSanitizer(int pre_made_delay=70){
+void dispenseHandSanitizer(int pre_made_delay=85){
   // Allow to dispense the hand sanitizer
   int counter = 0;
+  delay(1000);
+  mp3_play(2);
+  delay(200);
   while(counter <= pre_made_delay){
     counter++;
     Serial.println("Dispensing");
@@ -82,10 +93,20 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("IDLE");  
+
+  // use millis
+  if(getDistance() < 40){
+    Serial.println(getDistance());
+    if(millis() >= millis_time + period){
+      mp3_play(1);
+      millis_time = millis();
+    }
+  }
+  
   // Detect Infrared
   if(personDetected()){
     dispenseHandSanitizer();
-    mp3_play(1);
-  }
+    delay(300);
+  } 
+  
 }
